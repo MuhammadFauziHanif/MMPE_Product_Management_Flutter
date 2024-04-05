@@ -27,8 +27,15 @@ class ProductPage extends StatelessWidget {
             itemBuilder: (BuildContext context, int index) {
               return GestureDetector(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(provider.listProduct[index].productName)));
+                  // Navigate to the edit product page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditProductPage(
+                        product: provider.listProduct[index],
+                      ),
+                    ),
+                  );
                 },
                 child: Card(
                   elevation: 3,

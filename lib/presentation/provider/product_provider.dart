@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/add_product_dto.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/category.dart';
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/update_product_dto.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/domain/use_cases/add_product.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/domain/use_cases/edit_product.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/domain/use_cases/get_categories.dart';
@@ -35,23 +37,26 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addProduct(Product product) async {
+  Future<bool> addProduct(AddProductDto product) async {
     prefs = await SharedPreferences.getInstance();
     var username = await prefs?.getString('username') ?? '';
     var token = await prefs?.getString('token') ?? '';
 
-    await AddProduct().execute(User(username: username, token: token), product);
-    notifyListeners();
-  }
-
-  Future<void> editProduct(Product product) async {
-    prefs = await SharedPreferences.getInstance();
-    var username = await prefs?.getString('username') ?? '';
-    var token = await prefs?.getString('token') ?? '';
-
-    await EditProduct()
+    var response = await AddProduct()
         .execute(User(username: username, token: token), product);
     notifyListeners();
+    return response;
+  }
+
+  Future<bool> editProduct(UpdateProductDto product) async {
+    prefs = await SharedPreferences.getInstance();
+    var username = await prefs?.getString('username') ?? '';
+    var token = await prefs?.getString('token') ?? '';
+
+    var response = await EditProduct()
+        .execute(User(username: username, token: token), product);
+    notifyListeners();
+    return response;
   }
 
   Future<void> getCategories() async {

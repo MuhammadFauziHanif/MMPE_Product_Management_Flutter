@@ -1,16 +1,10 @@
 import 'package:mitsubishi_motors_parts_e_commerce/data/datasource/source.dart';
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/add_product_dto.dart';
 
 class TestSource extends Source {
   @override
   Future<String> deleteProduct(Map<String, dynamic> user, int id) {
     // TODO: implement deleteProduct
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<String> addProduct(
-      Map<String, dynamic> user, Map<String, dynamic> product) {
-    // TODO: implement addProduct
     throw UnimplementedError();
   }
 
@@ -36,6 +30,12 @@ class TestSource extends Source {
   @override
   Future<String> login(Map<String, dynamic> user) {
     // TODO: implement login
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<String> addProduct(Map<String, dynamic> user, AddProductDto product) {
+    // TODO: implement addProduct
     throw UnimplementedError();
   }
 }

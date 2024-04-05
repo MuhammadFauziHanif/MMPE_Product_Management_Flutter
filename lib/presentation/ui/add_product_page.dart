@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/add_product_dto.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/category.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/presentation/widget/image_input.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/presentation/provider/product_provider.dart';
@@ -39,52 +40,27 @@ class _AddProductPageState extends State<AddProductPage> {
   }
 
   Future<void> _addProduct() async {
+    AddProductDto addProductDto = AddProductDto(
+      productName: _productNameController.text,
+      categoryId: _selectedCategory!.categoryId,
+      description: _descriptionController.text,
+      price: double.parse(_priceController.text),
+      stockQuantity: int.parse(_stockQuantityController.text),
+      imageUrl: _selectedImage,
+    );
     try {
-      // Get the bearer token from the provider
-      prefs = await SharedPreferences.getInstance();
-      var token = await prefs?.getString('token') ?? '';
+      var response = await Provider.of<ProductProvider>(context, listen: false)
+          .addProduct(addProductDto);
 
-      // Check if the token is available
-      if (token == null) {
-        throw Exception('Bearer token not available.');
-      }
-
-      // Create a multipart request
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse(
-            'https://app.actualsolusi.com/bsi/MitsubishiMotorsPartsECommerce/api/Products/upload'),
-      );
-
-      // Set the bearer token in the request headers
-      request.headers['Authorization'] = 'Bearer $token';
-
-      // Add fields to the request
-      request.fields['ProductName'] = _productNameController.text;
-      request.fields['CategoryID'] = _selectedCategory!.categoryId.toString();
-      request.fields['Description'] = _descriptionController.text;
-      request.fields['Price'] = _priceController.text;
-      request.fields['StockQuantity'] = _stockQuantityController.text;
-
-      // Add file to the request
-      if (_selectedImage != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('file', _selectedImage!.path),
-        );
-      }
-
-      // Send the request
-      var response = await request.send();
-
+      //print the product dto
+      print(
+          'productName: ${addProductDto.productName}, categoryId: ${addProductDto.categoryId}, description: ${addProductDto.description}, price: ${addProductDto.price}, stockQuantity: ${addProductDto.stockQuantity}, imageUrl: ${addProductDto.imageUrl}');
       // Check the response status
-      if (response.statusCode == 201) {
+      if (response) {
         // Product added successfully
         // Navigate back to the previous page or show a success message
+        Provider.of<ProductProvider>(context, listen: false).getProducts();
         Navigator.pop(context);
-      } else {
-        // Error occurred
-        // Handle the error, show an error message, etc.
-        throw Exception('Failed to add product: ${response.reasonPhrase}');
       }
     } catch (e) {
       // Error occurred during the product addition process
@@ -95,7 +71,7 @@ class _AddProductPageState extends State<AddProductPage> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Error'),
-            content: Text('Failed to add product. Please try again later.'),
+            content: Text('Failed to add product: $e'),
             actions: [
               TextButton(
                 child: Text('OK'),

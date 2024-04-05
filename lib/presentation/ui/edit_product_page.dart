@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/category.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/product.dart';
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/update_product_dto.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/presentation/widget/image_input.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/presentation/provider/product_provider.dart';
 import 'package:provider/provider.dart';
@@ -24,14 +25,26 @@ class _EditProductPageState extends State<EditProductPage> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _stockQuantityController =
       TextEditingController();
-  File? _selectedImage;
-  late Category _selectedCategory;
+  Category? _selectedCategory;
   SharedPreferences? prefs;
+  late List<Category> _categories;
+
+  Future<void> _fetchCategories() async {
+    await Provider.of<ProductProvider>(context, listen: false).getCategories();
+    _categories =
+        Provider.of<ProductProvider>(context, listen: false).listCategory;
+    _selectedCategory = _categories.firstWhere((category) =>
+        category.categoryId == widget.product.category.categoryId);
+    setState(() {
+      // set the selected category to the product's category
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _populateFields();
+    _fetchCategories();
   }
 
   void _populateFields() {
@@ -43,51 +56,33 @@ class _EditProductPageState extends State<EditProductPage> {
 
   Future<void> _updateProduct() async {
     try {
-      // Get the bearer token from the provider
-      prefs = await SharedPreferences.getInstance();
-      var token = await prefs?.getString('token') ?? '';
-
-      // Check if the token is available
-      if (token == null) {
-        throw Exception('Bearer token not available.');
-      }
-
-      // Create a multipart request
-      var request = http.MultipartRequest(
-        'PUT',
-        Uri.parse(
-            'https://app.actualsolusi.com/bsi/MitsubishiMotorsPartsECommerce/api/Products/${widget.product.productId}'),
+      UpdateProductDto updateProductDto = UpdateProductDto(
+        productId: widget.product.productId,
+        productName: _productNameController.text,
+        categoryId: _selectedCategory!.categoryId,
+        description: _descriptionController.text,
+        price: double.parse(_priceController.text),
+        stockQuantity: int.parse(_stockQuantityController.text),
+        imageUrl: widget.product.imageUrl,
       );
 
-      // Set the bearer token in the request headers
-      request.headers['Authorization'] = 'Bearer $token';
+      print(
+          'productId: ${updateProductDto.productId}, productName: ${updateProductDto.productName}, categoryId: ${updateProductDto.categoryId}, description: ${updateProductDto.description}, price: ${updateProductDto.price}, stockQuantity: ${updateProductDto.stockQuantity}, imageUrl: ${updateProductDto.imageUrl}');
+      var response = await Provider.of<ProductProvider>(context, listen: false)
+          .editProduct(updateProductDto);
 
-      // Add fields to the request
-      request.fields['ProductName'] = _productNameController.text;
-      request.fields['CategoryID'] = _selectedCategory.categoryId.toString();
-      request.fields['Description'] = _descriptionController.text;
-      request.fields['Price'] = _priceController.text;
-      request.fields['StockQuantity'] = _stockQuantityController.text;
-
-      // Add file to the request
-      if (_selectedImage != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('file', _selectedImage!.path),
+      print('response from editProduct: $response');
+      // if successful, show snackbar and navigate back to product list
+      if (response) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Product ${updateProductDto.productName} updated successfully!'),
+          ),
         );
-      }
-
-      // Send the request
-      var response = await request.send();
-
-      // Check the response status
-      if (response.statusCode == 200) {
-        // Product updated successfully
-        // Navigate back to the previous page or show a success message
+        await Provider.of<ProductProvider>(context, listen: false)
+            .getProducts();
         Navigator.pop(context);
-      } else {
-        // Error occurred
-        // Handle the error, show an error message, etc.
-        throw Exception('Failed to update product: ${response.reasonPhrase}');
       }
     } catch (e) {
       // Error occurred during the product update process
@@ -124,6 +119,18 @@ class _EditProductPageState extends State<EditProductPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Container(
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(10.0),
+                  topRight: Radius.circular(10.0),
+                ),
+                child: Image.network(
+                  widget.product.imageUrl,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
             TextField(
               controller: _productNameController,
               decoration: InputDecoration(labelText: 'Product Name'),
@@ -173,12 +180,6 @@ class _EditProductPageState extends State<EditProductPage> {
               controller: _stockQuantityController,
               decoration: InputDecoration(labelText: 'Stock Quantity'),
               keyboardType: TextInputType.number,
-            ),
-            SizedBox(height: 10),
-            ImageInput(
-              onPickImage: (image) {
-                _selectedImage = image;
-              },
             ),
             SizedBox(height: 20),
             ElevatedButton(

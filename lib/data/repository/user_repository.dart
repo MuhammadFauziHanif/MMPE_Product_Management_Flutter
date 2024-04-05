@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/add_product_dto.dart';
 import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/category.dart';
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/update_product_dto.dart';
 
 import '../../domain/entities/product.dart';
 import '../../domain/entities/user.dart';
@@ -39,24 +41,20 @@ class UserRepository {
     return response == '200';
   }
 
-  Future<Product> addProduct(User user, Product product) async {
+  Future<bool> addProduct(User user, AddProductDto product) async {
     final source = getIt<Source>();
-    var json = jsonDecode(await source.addProduct(user.toJson(), {
-      'ProductName': product.productName,
-      'CategoryID': product.categoryId,
-      'Description': product.description,
-      'Price': product.price,
-      'StockQuantity': product.stockQuantity,
-      'ImageUrl': product.imageUrl,
-    }));
-    return Product.fromJson(json);
+    var response = await source.addProduct(user.toJson(), product);
+    print('response from addProduct: $response');
+    return response == '201';
   }
 
-  Future<Product> editProduct(User user, Product product) async {
+  Future<bool> editProduct(User user, UpdateProductDto product) async {
     final source = getIt<Source>();
-    var json =
+    var response =
         jsonDecode(await source.updateProduct(user.toJson(), product.toJson()));
-    return Product.fromJson(json);
+    print(
+        'response from editProduct: $response  compare to 200 ${response == '200'}');
+    return response.toString() == '200';
   }
 
   Future<List<Category>> getCategories(User user) async {

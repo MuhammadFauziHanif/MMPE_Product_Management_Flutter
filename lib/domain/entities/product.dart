@@ -1,3 +1,5 @@
+import 'package:mitsubishi_motors_parts_e_commerce/domain/entities/category.dart';
+
 class Product {
   int productId;
   String productName;
@@ -6,6 +8,7 @@ class Product {
   double price;
   int stockQuantity;
   String imageUrl;
+  Category category;
 
   Product({
     required this.productId,
@@ -15,41 +18,32 @@ class Product {
     required this.price,
     required this.stockQuantity,
     required this.imageUrl,
+    required this.category,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    return switch (json) {
-      {
-        'ProductID': int productId,
-        'ProductName': String productName,
-        'CategoryID': int categoryId,
-        'Description': String description,
-        'Price': double price,
-        'StockQuantity': int stockQuantity,
-        'ImageUrl': String imageUrl,
-      } =>
-        Product(
-          productId: productId,
-          productName: productName,
-          categoryId: categoryId,
-          description: description,
-          price: price,
-          stockQuantity: stockQuantity,
-          imageUrl: imageUrl,
-        ),
-      _ => throw const FormatException('Gagal membuat product')
-    };
+    return Product(
+      productId: json['ProductID'] as int,
+      productName: json['ProductName'] as String,
+      categoryId: json['CategoryID'] as int,
+      description: json['Description'] as String,
+      price: (json['Price'] as num).toDouble(),
+      stockQuantity: json['StockQuantity'] as int,
+      imageUrl: json['ImageUrl'] as String,
+      category: Category.fromJson(json['Category'] as Map<String, dynamic>),
+    );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'ProductID': this.productId,
-      'ProductName': this.productName,
-      'CategoryID': this.categoryId,
-      'Description': this.description,
-      'Price': this.price,
-      'StockQuantity': this.stockQuantity,
-      'ImageUrl': this.imageUrl,
+      'ProductID': productId,
+      'ProductName': productName,
+      'CategoryID': categoryId,
+      'Description': description,
+      'Price': price,
+      'StockQuantity': stockQuantity,
+      'ImageUrl': imageUrl,
+      'Category': category.toJson(),
     };
   }
 }
